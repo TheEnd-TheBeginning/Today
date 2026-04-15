@@ -7,6 +7,12 @@
 
 import UIKit
 
+enum ReminderState {
+    case adding
+    case editin
+    case viewing
+}
+
 class ReminderViewController: UICollectionViewController {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Row>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Row>
@@ -17,6 +23,7 @@ class ReminderViewController: UICollectionViewController {
         }
     }
     var workingReminder: Reminder
+    var isAddingNewReminder: Bool = false
     private var onChange: (Reminder) -> Void
     private var dataSource: DataSource?
     
@@ -56,12 +63,29 @@ class ReminderViewController: UICollectionViewController {
     }
     
     override func setEditing(_ editing: Bool, animated: Bool) {
-        super.setEditing(editing, animated: animated)
         if editing {
+            super.setEditing(editing, animated: animated)
             prepareForEditing()
         } else {
-            prepareForViewing()
+            if workingReminder.title.isEmpty {
+                let alert = UIAlertController(title: "Warning", message: "Reminder must have a title", preferredStyle: .alert)
+                alert.addAction(
+                    UIAlertAction(title: "OK", style: .cancel, handler: { _ in
+                        alert.dismiss(animated: true)
+                    })
+                )
+                present(alert, animated: true)
+            } else {
+                super.setEditing(editing, animated: animated)
+                if isAddingNewReminder {
+                    onChange(workingReminder)
+                } else {
+                    prepareForViewing()
+                }
+            }
+            
         }
+        
     }
     
     func cellRegistrationHandler(cell: UICollectionViewListCell, indexPath: IndexPath, row: Row) {
